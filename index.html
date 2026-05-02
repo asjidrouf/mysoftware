@@ -20,7 +20,7 @@
     --surface3: #242424;
     --text: #F0EDE8;
     --text-muted: #7A766F;
-    --text-soft: #B0AC A4;
+    --text-soft: #B0ACA4;
     --red: rgba(220,70,70,0.15);
     --red-border: rgba(220,70,70,0.35);
     --red-text: #F09595;
@@ -383,22 +383,18 @@ For each phase describe: what happens visually, duration, key elements, how to a
     }, 2200);
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const GEMINI_API_KEY = 'AIzaSyA-ykZwh3TPSLJegmlFQ1BMa5Uw_41LSM4';
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: { type: 'base64', media_type: imageMediaType, data: imageBase64 }
-              },
-              { type: 'text', text: prompt }
+          contents: [{
+            parts: [
+              { inline_data: { mime_type: imageMediaType, data: imageBase64 } },
+              { text: prompt }
             ]
-          }]
+          }],
+          generationConfig: { maxOutputTokens: 1500 }
         })
       });
 
@@ -411,7 +407,7 @@ For each phase describe: what happens visually, duration, key elements, how to a
       }
 
       const data = await res.json();
-      const text = data.content?.find(b => b.type === 'text')?.text || 'No response received.';
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.';
 
       const formatted = text
         .replace(/\[([^\]]+)\]/g, '<span class="section-tag">$1</span>')
@@ -429,7 +425,7 @@ For each phase describe: what happens visually, duration, key elements, how to a
       clearInterval(msgTimer);
       loadingBox.style.display = 'none';
       errorBox.style.display = 'block';
-      errorBox.textContent = 'Error: ' + err.message + '. Make sure you are using this via Claude.ai or a valid API session.';
+      errorBox.textContent = 'Error: ' + err.message;
       btn.disabled = false;
       btn.innerHTML = '<span>Try Again</span><span class="btn-arrow">→</span>';
     }
