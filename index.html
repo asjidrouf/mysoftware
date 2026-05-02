@@ -384,17 +384,22 @@ For each phase describe: what happens visually, duration, key elements, how to a
 
     try {
       const GEMINI_API_KEY = 'AIzaSyA-ykZwh3TPSLJegmlFQ1BMa5Uw_41LSM4';
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{
-            parts: [
-              { inline_data: { mime_type: imageMediaType, data: imageBase64 } },
-              { text: prompt }
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: { type: 'base64', media_type: imageMediaType, data: imageBase64 }
+              },
+              { type: 'text', text: prompt }
             ]
-          }],
-          generationConfig: { maxOutputTokens: 1500 }
+          }]
         })
       });
 
@@ -407,7 +412,7 @@ For each phase describe: what happens visually, duration, key elements, how to a
       }
 
       const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.';
+      const text = data.content?.find(b => b.type === 'text')?.text || 'No response received.';
 
       const formatted = text
         .replace(/\[([^\]]+)\]/g, '<span class="section-tag">$1</span>')
@@ -425,7 +430,7 @@ For each phase describe: what happens visually, duration, key elements, how to a
       clearInterval(msgTimer);
       loadingBox.style.display = 'none';
       errorBox.style.display = 'block';
-      errorBox.textContent = 'Error: ' + err.message;
+      errorBox.textContent = 'Error: ' + err.message + '. Make sure you are using this via Claude.ai or a valid API session.';
       btn.disabled = false;
       btn.innerHTML = '<span>Try Again</span><span class="btn-arrow">→</span>';
     }
